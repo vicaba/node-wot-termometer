@@ -46,34 +46,41 @@ servient.start().then((WoT) => {
         .then(function (thing) {
             console.log("Produced " + thing.getThingDescription().title);
             console.log(thing)
+
             // init property values
             temperature = 20;
 
-            // set read handlers
-            thing.setPropertyReadHandler("temperature", async function () {
-                return temperature;
+            thing.setPropertyReadHandler("temperature", function () {
+                return new Promise((resolve, reject) => {
+                    resolve(temperature);
+                });
             });
 
             // set action handlers
-            thing.setActionHandler("increment", function (value, options) {
-                changeTemperature(getTemperature() + value)
+            thing.setActionHandler("increment", async function (params, options) {
+                console.log("incrementing temperature with")
+                params.value().then((value) => {
+                    console.log(value)
+                    changeTemperature(getTemperature() + value)
+                })
             });
 
-            thing.setActionHandler("decrement", function (value, options) {
-                changeTemperature(getTemperature() - value)
+            thing.setActionHandler("decrement", async function (params, options) {
+                console.log("decrementing temperature with")
+                params.value().then((value) => {
+                    console.log(value)
+                    changeTemperature(getTemperature() - value)
+                })
             });
 
-            // Increase temperature every second
+            // check the temperature every 5 seconds, alert if temperature too high
             setInterval(() => {
-                console.log(`current temperature is ${temperature}`)
-
+                console.log("current temperature is ", temperature)
                 temperature = temperature + 1;
-                // emit a change
+
                 thing.emitPropertyChange("temperature", temperature);
 
-                // alert if temperature too high
                 if (temperature % 10 === 0) {
-                    console.log("Emit overheat event")
                     thing.emitEvent("overheat", temperature);
                 }
             }, 1000);
@@ -84,10 +91,16 @@ servient.start().then((WoT) => {
             });
 
             function getTemperature() {
+                // normally, you would call the temperature sensor's function to read the actual temperature value
+                // return new Promise((resolve, reject) => {
                 return temperature;
+                // resolve(5); //uncomment to test incrementing etc.
+                //  });
             }
 
             function changeTemperature(newValue) {
+                // normally, you would do physical action to change the temperature
+                //do nothing
                 temperature = newValue;
             }
         })
